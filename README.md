@@ -15,9 +15,15 @@ workon myenv
 pip install -r requirements.txt
 ```
 
-
-
-
+### Supported cases
+The flagellar swimmer with $10$ links and ameboid swimmer with $20$ links swim within the background cellular flow in unbounded space. The program 'discretization.py' must be run intially to produce data about the discretization of the swimmer. 
+```
+python discretization.py
+```
+Then the program 'calculate_v.py' can be imported as a module to obtain the locomotion of the swimmer and pressure on it.
+```
+import calculate_v
+```
 ### Citation
 PLease consider citing our [paper](https://arxiv.org/pdf/2408.07346) if you find it useful:
 ```bibtex
