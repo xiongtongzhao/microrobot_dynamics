@@ -24,6 +24,17 @@ Then the program 'calculate_v.py' can be imported as a module to obtain the loco
 ```
 import calculate_v
 ```
+
+2. The flagellar swimmer with $10$ links and ameboid swimmer with $20$ links swim within a quiescent flow in a bounded space. The programs 'discretization.py' and 'constriction_discrete.py' must be run intially to produce data about the discretization of the swimmer and the boundary, respectively. 
+```
+python discretization.py
+python constriction_discrete.py
+```
+Then the program 'calculate_v.py' can be imported as a module to obtain the locomotion of the swimmer.
+```
+import calculate_v
+```
+
 ### Citation
 PLease consider citing our [paper](https://arxiv.org/pdf/2408.07346) if you find it useful:
 ```bibtex
