@@ -6,14 +6,19 @@
 Tongzhao Xiong, Zhaorong Liu, Chong Jin Ong, Lailai Zhu 
 <hr style="border: 2px solid gray;"></hr>
 
-This repository contains the code for the regularized Stokeslet method to solve microrobots' dynamics in unbounded and bounded space. 
+This repository contains the code for the regularized Stokeslet method to solve the flagellar and ameboid microrobots' dynamics in unbounded and bounded space. 
 ### Environment
+```
+pip install virtualenv
+virtualenv -p python3.7.17 myenv
+workon myenv
+pip install -r requirements.txt
+```
 
 
 
 
-
-## Citation
+### Citation
 PLease consider citing our [paper](https://arxiv.org/pdf/2408.07346) if you find it useful:
 ```bibtex
 @article{xiong2024enabling,
