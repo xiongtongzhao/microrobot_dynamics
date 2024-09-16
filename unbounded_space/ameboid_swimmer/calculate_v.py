@@ -483,7 +483,7 @@ def Calculate_velocity(x,w,x_first):
     output=np.concatenate((velon,action))
     
     
-    D1y,D2y,D1x,D2x=MatrixD_position(beta_ini,Xini,Yini,1.0)
+    D1y,D2y,D1x,D2x=MatrixD_position(beta_ini,Xini,Yini,1.0/NL)
    
     Yp=torch.matmul(D1y,torch.ones((NL,1),dtype=torch.double,device=device))+D2y
     Xp=torch.matmul(D1x,torch.ones((NL,1),dtype=torch.double,device=device))+D2x   
