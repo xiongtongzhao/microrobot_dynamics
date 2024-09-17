@@ -18,15 +18,15 @@ b=0.85
 
 
 
-N=24
-hN=12
+N=12
+hN=6
 N2=2
 hN2=1.0
 
-dense_size=int(N/2)*2
-sparse_size=int(N/2)*1
-dense_size2=int(N2/2)*2
-sparse_size2=1
+dense_size=int(N/2)*4
+sparse_size=int(N/2)*2
+dense_size2=int(N2/2)*4
+sparse_size2=2
 
 
 # Xf=np.zeros((sparse_size+1,sparse_size+1),dtype=np.float64)
