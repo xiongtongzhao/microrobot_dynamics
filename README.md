@@ -25,7 +25,7 @@ Then the program 'calculate_v.py' can be imported as a module to obtain the loco
 import calculate_v
 ```
 
-2. The flagellar swimmer with $10$ links and ameboid swimmer with $20$ links swim in a bounded quiescent environment. The programs 'discretization.py' and 'constriction_discrete.py' must be run intially to discretize the swimmer and the boundary, respectively. 
+2. The flagellar swimmer with $10$ links and ameboid swimmer with $20$ links swim in a bounded quiescent environment. Here, 'discretization.py' and 'constriction_discrete.py' must be run first to discretize the swimmer and the boundary, respectively. 
 ```
 python discretization.py
 python constriction_discrete.py
