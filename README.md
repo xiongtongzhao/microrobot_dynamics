@@ -6,7 +6,7 @@
 Tongzhao Xiong, Zhaorong Liu, Yufei Wang, Chong Jin Ong, Lailai Zhu 
 <hr style="border: 2px solid gray;"></hr>
 
-This repository contains the code for the regularized Stokeslet method to solve the flagellar and ameboid microrobots' dynamics in unbounded and bounded space. 
+This repository contains the numerical implementation we have developed to solve the low-Reynolds-number swimming hydrodynamics of a linear microswimmer and a ring counterpart in unbounded and bounded space. This implementation forms the emulated environment for reinforcement learning. 
 ### Environment
 ```
 pip install virtualenv
