@@ -3,7 +3,7 @@
 [![Python](https://img.shields.io/badge/python-3.7.17-blue)](https://www.python.org)
 
 
-Tongzhao Xiong, Zhaorong Liu, Chong Jin Ong, Lailai Zhu 
+Tongzhao Xiong, Zhaorong Liu, Yufei Wang, Chong Jin Ong, Lailai Zhu 
 <hr style="border: 2px solid gray;"></hr>
 
 This repository contains the code for the regularized Stokeslet method to solve the flagellar and ameboid microrobots' dynamics in unbounded and bounded space. 
@@ -16,7 +16,7 @@ pip install -r requirements.txt
 ```
 
 ### Supported cases
-1. The flagellar swimmer with $10$ links and ameboid swimmer with $20$ links swim within the background cellular flow in unbounded space. The program 'discretization.py' must be run intially to produce data about the discretization of the swimmer. 
+1. The flagellar swimmer with $10$ links and ameboid swimmer with $20$ links swim within the background cellular flow in unbounded space. The program 'discretization.py' must be run first for the discretization of the swimmer. 
 ```
 python discretization.py
 ```
@@ -25,7 +25,7 @@ Then the program 'calculate_v.py' can be imported as a module to obtain the loco
 import calculate_v
 ```
 
-2. The flagellar swimmer with $10$ links and ameboid swimmer with $20$ links swim within a quiescent flow in a bounded space. The programs 'discretization.py' and 'constriction_discrete.py' must be run intially to produce data about the discretization of the swimmer and the boundary, respectively. 
+2. The flagellar swimmer with $10$ links and ameboid swimmer with $20$ links swim in a bounded quiescent environment. The programs 'discretization.py' and 'constriction_discrete.py' must be run intially to discretize the swimmer and the boundary, respectively. 
 ```
 python discretization.py
 python constriction_discrete.py
