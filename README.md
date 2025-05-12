@@ -4,8 +4,10 @@
 
 
 Tongzhao Xiong, Zhaorong Liu, Yufei Wang, Chong Jin Ong, Lailai Zhu 
-Department of Mechanical Engineering, National University of Singapore
 <hr style="border: 2px solid gray;"></hr>
+
+Department of Mechanical Engineering, National University of Singapore
+
 
 This repository contains the numerical implementation we have developed to solve the low-Reynolds-number swimming hydrodynamics of a linear microswimmer and a ring counterpart in unbounded and bounded space. This implementation forms the emulated environment for reinforcement learning. 
 ### Environment
