@@ -16,7 +16,7 @@ pip install -r requirements.txt
 ```
 
 ### Supported cases
-1. The flagellar swimmer with $10$ links and ameboid swimmer with $20$ links swim within the background cellular flow in unbounded space. The program 'discretization.py' must be run first for the discretization of the swimmer. 
+1. The flagellar swimmer with $10$ links and ameboid swimmer with $20$ links swim in unbounded space with and without a background flow. The program 'discretization.py' needs to be run first for the discretization of the swimmer. 
 ```
 python discretization.py
 ```
