@@ -16,11 +16,11 @@ pip install -r requirements.txt
 ```
 
 ### Supported cases
-1. The flagellar swimmer with $10$ links and ameboid swimmer with $20$ links swim in unbounded space with and without a background flow. The program 'discretization.py' needs to be run first for the discretization of the swimmer. 
+1. The flagellar swimmer with $10$ links and ameboid swimmer with $20$ links swim in unbounded space with and without a background flow. 'discretization.py' needs to be run first for the discretization of the swimmer. 
 ```
 python discretization.py
 ```
-Then the program 'calculate_v.py' can be imported as a module to obtain the locomotion of the swimmer and pressure on it.
+Then 'calculate_v.py' can be imported as a module to obtain the locomotion of the swimmer and pressure on it.
 ```
 import calculate_v
 ```
@@ -30,7 +30,7 @@ import calculate_v
 python discretization.py
 python constriction_discrete.py
 ```
-Then the program 'calculate_v.py' can be imported as a module to obtain the locomotion of the swimmer.
+Then 'calculate_v.py' can be imported as a module to obtain the locomotion of the swimmer.
 ```
 import calculate_v
 ```
