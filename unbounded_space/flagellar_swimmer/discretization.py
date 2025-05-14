@@ -2,9 +2,8 @@ import numpy as np
 import torch
 N=3
 NL=10
-wl=1.0
-dense_size=int(NL*10)
-sparse_size=int(NL*5)
+dense_size=int(NL*8)
+sparse_size=int(NL*4)
 Xf=np.zeros((sparse_size+1),dtype=np.float64)
 Yf=np.zeros((sparse_size+1),dtype=np.float64)
 Zf=np.ones((sparse_size+1),dtype=np.float64)*0.01
@@ -24,8 +23,8 @@ Min_Distance_Label=np.zeros((dense_size+1,sparse_size+1),dtype=np.int16)
 Min_Distance_Index=np.zeros((sparse_size+1,N),dtype=np.int16)
 Min_Distance_num=np.zeros((sparse_size+1),dtype=np.int16)
 index_equal_index=np.arange((dense_size+1))
-Xf = np.arange(0, wl+0.1*wl/sparse_size, wl/sparse_size)
-Xq = np.arange(0, wl+0.1*wl/dense_size, wl/dense_size)
+Xf = np.arange(0, 1.0+0.1*1.0/sparse_size, 1.0/sparse_size)
+Xq = np.arange(0, 1.0+0.1/dense_size, 1.0/dense_size)
     
 #print(Xf.shape,Xq.shape)    
     
@@ -91,6 +90,25 @@ torch.save(torch.from_numpy(Yf_all), 'Yf_all_fila.pt')
 torch.save(torch.from_numpy(Zf_all), 'Zf_all_fila.pt')
 torch.save(torch.from_numpy(Min_Distance_num), 'Min_Distance_num_fila.pt')
 torch.save(torch.from_numpy(Correponding_label), 'Correponding_label_fila.pt')
-  
+print(Correponding_label)
+#print(Xf_match_q)
+# print(Yf_all)
+# print(Zf_all)
+
+
+
+#     print(Min_Distance_num[i,:])
+# print(np.max(Min_Distance_num))
+# print(np.min(Min_Distance_num))    
+#     for m in range(Distance[i,j,:,:].shape[1]):
+#         #Min_Distance_Label[i,j,k,np.argmin(Distance[i,j,k,:])]=1
+#         Min_Distance_num[i,j,m]=np.sum(Min_Distance_Label[i,j,:,m])
+#         selected_x=Min_Distance_Label[i,j,:,m]*Xq_all[i,j,:]
+#         selected_y=Min_Distance_Label[i,j,:,m]*Yq_all[i,j,:]
+#         selected_z=Min_Distance_Label[i,j,:,m]*Zq_all[i,j,:]            
+#         
+#         Xf_match_q[i,j,m,0:Min_Distance_num[i,j,m]]=selected_x[np.nonzero(Min_Distance_Label[i,j,:,m])]
+#         Yf_match_q[i,j,m,0:Min_Distance_num[i,j,m]]=selected_y[np.nonzero(Min_Distance_Label[i,j,:,m])]       
+#         Zf_match_q[i,j,m,0:Min_Distance_num[i,j,m]]=selected_z[np.nonzero(Min_Distance_Label[i,j,:,m])]    
     
     
