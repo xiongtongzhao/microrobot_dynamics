@@ -11,16 +11,16 @@ import torch
 import time
 
 
+directory_path = os.getcwd()
+folder_name = path.basename(directory_path)
 
 
-Ut=0.0001
+# N=int(int(folder_name)*10)
+# NL=int(folder_name)
 
-Xf_match_q_wall=torch.load(  'Xf_match_q_wall.pt')
-Yf_match_q_wall=torch.load( 'Yf_match_q_wall.pt')
-Zf_match_q_wall=torch.load( 'Zf_match_q_wall.pt')
-Xf_all_wall=torch.load( 'Xf_all_wall.pt')
-Yf_all_wall=torch.load( 'Yf_all_wall.pt')
-Zf_all_wall=torch.load( 'Zf_all_wall.pt')
+Ut=0.00
+
+
 
 Xf_match_q_fila=torch.load(  'Xf_match_q_fila.pt')
 Yf_match_q_fila=torch.load( 'Yf_match_q_fila.pt')
@@ -36,8 +36,8 @@ Min_Distance_Label_fila=torch.load( 'Correponding_label_fila.pt')  #labels of st
 
 device = torch.device('cpu')
 NL=20
-N=int(NL*5)
-N_dense=int(NL*10)
+N=int(NL*2)
+N_dense=int(NL*4)
 torch.set_num_threads(10)
 
 
@@ -45,10 +45,15 @@ Fila_point_num=Xf_all_fila.shape[0]
 
 
 S_fila_fila=torch.zeros((Fila_point_num,Xf_match_q_fila.shape[0],Xf_match_q_fila.shape[1],3,3),dtype=torch.double)
-
+B_fila_fila=torch.zeros((Fila_point_num,Xf_match_q_fila.shape[0],Xf_match_q_fila.shape[1],3,3),dtype=torch.double)
+S_fila_fila_sum=torch.zeros((Fila_point_num,Xf_match_q_fila.shape[0],3,3),dtype=torch.double)
+B_fila_fila_sum=torch.zeros((Fila_point_num,Xf_match_q_fila.shape[0],3,3),dtype=torch.double)
 
 P_fila_fila=torch.zeros((Fila_point_num,Xf_match_q_fila.shape[0],Xf_match_q_fila.shape[1],3),dtype=torch.double)
 P_fila_fila_sum=torch.zeros((Fila_point_num,Xf_match_q_fila.shape[0],3),dtype=torch.double)
+
+
+
 
 
 
@@ -57,20 +62,37 @@ Yf_match_q_fila=Yf_match_q_fila.view(1,Yf_match_q_fila.shape[0],Yf_match_q_fila.
 Zf_match_q_fila=Zf_match_q_fila.view(1,Zf_match_q_fila.shape[0],Zf_match_q_fila.shape[1])
 
 
+
+
 Xf_all_fila=Xf_all_fila.view(-1,1,1)
 Yf_all_fila=Yf_all_fila.view(-1,1,1)
 Zf_all_fila=Zf_all_fila.view(-1,1,1)
 
-A_fila_fila= torch.zeros(((Fila_point_num)*3,(Fila_point_num)*3),dtype=torch.double,device=device)
 
 
-PA_fila_fila=torch.zeros(((Fila_point_num),(Fila_point_num)*3),dtype=torch.double,device=device)
+
+A_fila_fila=    torch.zeros(((Fila_point_num)*3,(Fila_point_num)*3),dtype=torch.double,device=device)
+
+
+
+
+
+
+PA_fila_fila=    torch.zeros(((Fila_point_num),(Fila_point_num)*3),dtype=torch.double,device=device)
+
+
 
 
 
 delta_x_fila_fila=torch.zeros((Fila_point_num,Xf_match_q_fila.shape[0],Xf_match_q_fila.shape[1]),dtype=torch.double)
 delta_y_fila_fila=torch.zeros((Fila_point_num,Xf_match_q_fila.shape[0],Xf_match_q_fila.shape[1]),dtype=torch.double)
 delta_z_fila_fila=torch.zeros((Fila_point_num,Xf_match_q_fila.shape[0],Xf_match_q_fila.shape[1]),dtype=torch.double)
+delta_z_I_fila_fila=torch.zeros((Fila_point_num,Xf_match_q_fila.shape[0],Xf_match_q_fila.shape[1]),dtype=torch.double)
+
+
+
+
+
 
 
 
@@ -115,6 +137,44 @@ def pressurelet_fila_fila(x,y,z,e):
     P_fila_fila[:,:,:,2]=y*RD5R2*Min_Distance_Label_fila
     P_fila_fila[:,:,:,1]=z*RD5R2*Min_Distance_Label_fila
     
+    
+def pressurelet_wall_wall(x,y,z,e):
+
+    global P_wall_wall
+    R=torch.sqrt(x**2+y**2+z**2+e**2)    
+    RD=1/R
+    RD5=RD**5 
+    R2=2*R**2+3*e**2
+    RD5R2=R2*RD5
+    P_wall_wall[:,:,:,0]=x*RD5R2*Min_Distance_Label_wall
+    P_wall_wall[:,:,:,2]=y*RD5R2*Min_Distance_Label_wall
+    P_wall_wall[:,:,:,1]=z*RD5R2*Min_Distance_Label_wall    
+    
+
+
+def pressurelet_fila_wall(x,y,z,e):
+
+    global P_fila_wall
+    R=torch.sqrt(x**2+y**2+z**2+e**2)    
+    RD=1/R
+    RD5=RD**5 
+    R2=2*R**2+3*e**2
+    RD5R2=R2*RD5
+    P_fila_wall[:,:,:,0]=x*RD5R2*Min_Distance_Label_wall
+    P_fila_wall[:,:,:,2]=y*RD5R2*Min_Distance_Label_wall
+    P_fila_wall[:,:,:,1]=z*RD5R2*Min_Distance_Label_wall
+
+def pressurelet_wall_fila(x,y,z,e):
+
+    global P_wall_fila
+    R=torch.sqrt(x**2+y**2+z**2+e**2)    
+    RD=1/R
+    RD5=RD**5 
+    R2=2*R**2+3*e**2
+    RD5R2=R2*RD5
+    P_wall_fila[:,:,:,0]=x*RD5R2*Min_Distance_Label_fila
+    P_wall_fila[:,:,:,2]=y*RD5R2*Min_Distance_Label_fila
+    P_wall_fila[:,:,:,1]=z*RD5R2*Min_Distance_Label_fila 
 
 
 
@@ -125,7 +185,15 @@ def stokeslet_fila_fila(x,y,z,e):
     
     RD=1/R
     RD3=RD**3    
-
+#    X=torch.cat((x.view(1,-1),y.view(1,-1),z.view(1,-1)),dim=1)
+#     print(R.shape)
+#     print(Min_Distance_Label_fila.shape)
+#     Min_Distance_Label_fila_expand=Min_Distance_Label_fila.clone()
+#     Min_Distance_Label_fila_expand=Min_Distance_Label_fila_expand.view(1,Min_Distance_Label_fila_expand.shape[0],Min_Distance_Label_fila_expand.shape[1])\
+#                                     .repeat(RD.shape[0],1,1)
+    
+    
+    #print(torch.matmul((X).view(-1,1),(X).view(1,-1)))
     S_fila_fila[:,:,:,0,0]=(RD+e**2*RD3+x*x*RD3)*Min_Distance_Label_fila
     S_fila_fila[:,:,:,0,2]=(x*y*RD3)*Min_Distance_Label_fila
     S_fila_fila[:,:,:,0,1]=(x*z*RD3)*Min_Distance_Label_fila
@@ -137,33 +205,212 @@ def stokeslet_fila_fila(x,y,z,e):
     S_fila_fila[:,:,:,1,1]= (RD+e**2*RD3+z*z*RD3)*Min_Distance_Label_fila 
        
     
+def stokeslet_wall_wall(x,y,z,e):
+    global S_wall_wall
+    R=torch.sqrt(x**2+y**2+z**2+e**2)
+    RD=1/R
+    RD3=RD**3    
+#    X=torch.cat((x.view(1,-1),y.view(1,-1),z.view(1,-1)),dim=1)
+    #print(R)
 
+    #print(torch.matmul((X).view(-1,1),(X).view(1,-1)))
+    S_wall_wall[:,:,:,0,0]=(RD+e**2*RD3+x*x*RD3)*Min_Distance_Label_wall
+    S_wall_wall[:,:,:,0,2]=(x*y*RD3)*Min_Distance_Label_wall
+    S_wall_wall[:,:,:,0,1]=(x*z*RD3)*Min_Distance_Label_wall
+    S_wall_wall[:,:,:,2,0]=S_wall_wall[:,:,:,0,2]
+    S_wall_wall[:,:,:,2,2]=(RD+e**2*RD3+y*y*RD3)*Min_Distance_Label_wall
+    S_wall_wall[:,:,:,2,1]=(y*z*RD3)*Min_Distance_Label_wall
+    S_wall_wall[:,:,:,1,0]=S_wall_wall[:,:,:,0,1]
+    S_wall_wall[:,:,:,1,2]=S_wall_wall[:,:,:,2,1]
+    S_wall_wall[:,:,:,1,1]= (RD+e**2*RD3+z*z*RD3)*Min_Distance_Label_wall  
+    
+def stokeslet_fila_wall(x,y,z,e):
+    global S_fila_wall
+    R=torch.sqrt(x**2+y**2+z**2+e**2)
+    RD=1/R
+    RD3=RD**3    
+#    X=torch.cat((x.view(1,-1),y.view(1,-1),z.view(1,-1)),dim=1)
+    #print(R)
 
-
-
-
+    #print(torch.matmul((X).view(-1,1),(X).view(1,-1)))
+    S_fila_wall[:,:,:,0,0]=(RD+e**2*RD3+x*x*RD3)*Min_Distance_Label_wall
+    S_fila_wall[:,:,:,0,2]=(x*y*RD3)*Min_Distance_Label_wall
+    S_fila_wall[:,:,:,0,1]=(x*z*RD3)*Min_Distance_Label_wall
+    S_fila_wall[:,:,:,2,0]=S_fila_wall[:,:,:,0,2]
+    S_fila_wall[:,:,:,2,2]=(RD+e**2*RD3+y*y*RD3)*Min_Distance_Label_wall
+    S_fila_wall[:,:,:,2,1]=(y*z*RD3)*Min_Distance_Label_wall
+    S_fila_wall[:,:,:,1,0]=S_fila_wall[:,:,:,0,1]
+    S_fila_wall[:,:,:,1,2]=S_fila_wall[:,:,:,2,1]
+    S_fila_wall[:,:,:,1,1]= (RD+e**2*RD3+z*z*RD3)*Min_Distance_Label_wall
+    
 
     
+    
+    
+    
+def stokeslet_wall_fila(x,y,z,e):
+    global S_wall_fila
+    R=torch.sqrt(x**2+y**2+z**2+e**2)
+    RD=1/R
+    RD3=RD**3    
+#    X=torch.cat((x.view(1,-1),y.view(1,-1),z.view(1,-1)),dim=1)
+    #print(R)
+
+    #print(torch.matmul((X).view(-1,1),(X).view(1,-1)))
+    S_wall_fila[:,:,:,0,0]=(RD+e**2*RD3+x*x*RD3)*Min_Distance_Label_fila
+    S_wall_fila[:,:,:,0,2]=(x*y*RD3)*Min_Distance_Label_fila
+    S_wall_fila[:,:,:,0,1]=(x*z*RD3)*Min_Distance_Label_fila
+    S_wall_fila[:,:,:,2,0]=S_wall_fila[:,:,:,0,2]
+    S_wall_fila[:,:,:,2,2]=(RD+e**2*RD3+y*y*RD3)*Min_Distance_Label_fila
+    S_wall_fila[:,:,:,2,1]=(y*z*RD3)*Min_Distance_Label_fila
+    S_wall_fila[:,:,:,1,0]=S_wall_fila[:,:,:,0,1]
+    S_wall_fila[:,:,:,1,2]=S_wall_fila[:,:,:,2,1]
+    S_wall_fila[:,:,:,1,1]= (RD+e**2*RD3+z*z*RD3)*Min_Distance_Label_fila
+    
+
+
+
+def blakelet_fila_fila(x1,x2,x3,h,e):
+    global B_fila_fila    
+    R=torch.sqrt(x1**2+x2**2+x3**2+e**2)
+    #print(h)
+    RD=1/R
+    RD3=RD**3
+    RD5=RD**5    
+    H2=h**2
+    B_fila_fila[:,:,:,0,0]=(-H2 *((6* e**2)*RD5 - 2*RD3) - e**2*RD3 - RD - (6 *(H2)* x1**2)*RD5 - x1**2*RD3 + (6 *e**2 *h *x3)*RD5\
+                + 2* h *(x3*RD3 - (3* x1 *x1* x3)*RD5))*Min_Distance_Label_fila
+    B_fila_fila[:,:,:,0,2]=(-((6 *H2 *x1 *x2)*RD5) - (x1 *x2)*RD3 -(6* h* x1 *x2 *x3)*RD5)*Min_Distance_Label_fila
+    B_fila_fila[:,:,:,0,1]=  ((6 *H2* x1 *x3)*RD5 - (x1* x3)*RD3 - 2 *h *(x1*RD3 - (3 *x1 *x3 *x3)*RD5))*Min_Distance_Label_fila
+    B_fila_fila[:,:,:,2,0]=  (-((6* H2 *x1 *x2)*RD5) - (x1* x2)*RD3 - (6 *h *x1* x2 *x3)*RD5)*Min_Distance_Label_fila
+    B_fila_fila[:,:,:,2,2]=   (-H2 *((6 *e**2)*RD5 - 2*RD3) - e**2*RD3 - RD - (6 *H2 *x2**2)*RD5 - x2**2*RD3 +\
+                   (6 *e**2 *h *x3)*RD5 + 2* h *(x3*RD3 - (3 *x2 *x2 *x3)*RD5))*Min_Distance_Label_fila
+    B_fila_fila[:,:,:,2,1]=((6* H2 *x2 *x3)*RD5 - (x2 *x3)*RD3 - 2 *h *(x2*RD3 - (3 *x3 *x2* x3)*RD5))*Min_Distance_Label_fila
+    B_fila_fila[:,:,:,1,0]=   (-((6 *e**2* h *x1)*RD5) - (6 *H2 *x1 *x3)*RD5 - (x1 *x3)*RD3 + 2 *h *(-(x1*RD3) - (3 *(e**2 *x1 + x1 *x3 *x3))*RD5))*Min_Distance_Label_fila
+    B_fila_fila[:,:,:,1,2]=    (-((6 *e**2* h *x2)*RD5) - (6 *H2 *x2* x3)*RD5 - (x2 *x3)*RD3 + 2 *h *(-(x2*RD3) - (3 *(e**2 *x1 + x3 *x2 *x3))*RD5))*Min_Distance_Label_fila
+    B_fila_fila[:,:,:,1,1]=   (H2 *((6 *e**2)*RD5 - 2*RD3) - e**2*RD3 - RD + (6 *H2 *x3**2)*RD5 - x3**2*RD3 - \
+                   2 *h *(x3*RD3 - (3 *(e**2 *x1 + x3 *x3 *x3))*RD5))*Min_Distance_Label_fila
+
+    
+
+def blakelet_wall_wall(x1,x2,x3,h,e):
+    global B_wall_wall   
+    R=torch.sqrt(x1**2+x2**2+x3**2+e**2)
+
+    RD=1/R
+    RD3=RD**3
+    RD5=RD**5    
+    H2=h**2
+    B_wall_wall[:,:,:,0,0]=(-H2 *((6* e**2)*RD5 - 2*RD3) - e**2*RD3 - RD - (6 *(H2)* x1**2)*RD5 - x1**2*RD3 + (6 *e**2 *h *x3)*RD5\
+                + 2* h *(x3*RD3 - (3* x1 *x1* x3)*RD5))*Min_Distance_Label_wall
+    B_wall_wall[:,:,:,0,2]=(-((6 *H2 *x1 *x2)*RD5) - (x1 *x2)*RD3 -(6* h* x1 *x2 *x3)*RD5)*Min_Distance_Label_wall
+    B_wall_wall[:,:,:,0,1]=  ((6 *H2* x1 *x3)*RD5 - (x1* x3)*RD3 - 2 *h *(x1*RD3 - (3 *x1 *x3 *x3)*RD5))*Min_Distance_Label_wall
+    B_wall_wall[:,:,:,2,0]=  (-((6* H2 *x1 *x2)*RD5) - (x1* x2)*RD3 - (6 *h *x1* x2 *x3)*RD5)*Min_Distance_Label_wall
+    B_wall_wall[:,:,:,2,2]=   (-H2 *((6 *e**2)*RD5 - 2*RD3) - e**2*RD3 - RD - (6 *H2 *x2**2)*RD5 - x2**2*RD3 +\
+                   (6 *e**2 *h *x3)*RD5 + 2* h *(x3*RD3 - (3 *x2 *x2 *x3)*RD5))*Min_Distance_Label_wall
+    B_wall_wall[:,:,:,2,1]=((6* H2 *x2 *x3)*RD5 - (x2 *x3)*RD3 - 2 *h *(x2*RD3 - (3 *x3 *x2* x3)*RD5))*Min_Distance_Label_wall
+    B_wall_wall[:,:,:,1,0]=   (-((6 *e**2* h *x1)*RD5) - (6 *H2 *x1 *x3)*RD5 - (x1 *x3)*RD3 + 2 *h *(-(x1*RD3) - (3 *(e**2 *x1 + x1 *x3 *x3))*RD5))*Min_Distance_Label_wall
+    B_wall_wall[:,:,:,1,2]=    (-((6 *e**2* h *x2)*RD5) - (6 *H2 *x2* x3)*RD5 - (x2 *x3)*RD3 + 2 *h *(-(x2*RD3) - (3 *(e**2 *x1 + x3 *x2 *x3))*RD5))*Min_Distance_Label_wall
+    B_wall_wall[:,:,:,1,1]=   (H2 *((6 *e**2)*RD5 - 2*RD3) - e**2*RD3 - RD + (6 *H2 *x3**2)*RD5 - x3**2*RD3 - \
+                   2 *h *(x3*RD3 - (3 *(e**2 *x1 + x3 *x3 *x3))*RD5))*Min_Distance_Label_wall
+    
+    
+    
+def blakelet_fila_wall(x1,x2,x3,h,e):
+    global B_fila_wall    
+    R=torch.sqrt(x1**2+x2**2+x3**2+e**2)
+
+    RD=1/R
+    RD3=RD**3
+    RD5=RD**5    
+    H2=h**2
+    B_fila_wall[:,:,:,0,0]=(-H2 *((6* e**2)*RD5 - 2*RD3) - e**2*RD3 - RD - (6 *(H2)* x1**2)*RD5 - x1**2*RD3 + (6 *e**2 *h *x3)*RD5\
+                + 2* h *(x3*RD3 - (3* x1 *x1* x3)*RD5))*Min_Distance_Label_wall
+    B_fila_wall[:,:,:,0,2]=(-((6 *H2 *x1 *x2)*RD5) - (x1 *x2)*RD3 -(6* h* x1 *x2 *x3)*RD5)*Min_Distance_Label_wall
+    B_fila_wall[:,:,:,0,1]=  ((6 *H2* x1 *x3)*RD5 - (x1* x3)*RD3 - 2 *h *(x1*RD3 - (3 *x1 *x3 *x3)*RD5))*Min_Distance_Label_wall
+    B_fila_wall[:,:,:,2,0]=  (-((6* H2 *x1 *x2)*RD5) - (x1* x2)*RD3 - (6 *h *x1* x2 *x3)*RD5)*Min_Distance_Label_wall 
+    B_fila_wall[:,:,:,2,2]=   (-H2 *((6 *e**2)*RD5 - 2*RD3) - e**2*RD3 - RD - (6 *H2 *x2**2)*RD5 - x2**2*RD3 +\
+                   (6 *e**2 *h *x3)*RD5 + 2* h *(x3*RD3 - (3 *x2 *x2 *x3)*RD5))*Min_Distance_Label_wall
+    B_fila_wall[:,:,:,2,1]=((6* H2 *x2 *x3)*RD5 - (x2 *x3)*RD3 - 2 *h *(x2*RD3 - (3 *x3 *x2* x3)*RD5))*Min_Distance_Label_wall
+    B_fila_wall[:,:,:,1,0]=   (-((6 *e**2* h *x1)*RD5) - (6 *H2 *x1 *x3)*RD5 - (x1 *x3)*RD3 + 2 *h *(-(x1*RD3) - (3 *(e**2 *x1 + x1 *x3 *x3))*RD5))*Min_Distance_Label_wall
+    B_fila_wall[:,:,:,1,2]=    (-((6 *e**2* h *x2)*RD5) - (6 *H2 *x2* x3)*RD5 - (x2 *x3)*RD3 + 2 *h *(-(x2*RD3) - (3 *(e**2 *x1 + x3 *x2 *x3))*RD5))*Min_Distance_Label_wall
+    B_fila_wall[:,:,:,1,1]=   (H2 *((6 *e**2)*RD5 - 2*RD3) - e**2*RD3 - RD + (6 *H2 *x3**2)*RD5 - x3**2*RD3 - \
+                   2 *h *(x3*RD3 - (3 *(e**2 *x1 + x3 *x3 *x3))*RD5))*Min_Distance_Label_wall  
+    
+    
+    
+    
+    
+    
+def blakelet_wall_fila(x1,x2,x3,h,e):
+    global B_wall_fila    
+    R=torch.sqrt(x1**2+x2**2+x3**2+e**2)
+
+    RD=1/R
+    RD3=RD**3
+    RD5=RD**5    
+    H2=h**2
+    B_wall_fila[:,:,:,0,0]=(-H2 *((6* e**2)*RD5 - 2*RD3) - e**2*RD3 - RD - (6 *(H2)* x1**2)*RD5 - x1**2*RD3 + (6 *e**2 *h *x3)*RD5\
+                + 2* h *(x3*RD3 - (3* x1 *x1* x3)*RD5))*Min_Distance_Label_fila
+    B_wall_fila[:,:,:,0,2]=(-((6 *H2 *x1 *x2)*RD5) - (x1 *x2)*RD3 -(6* h* x1 *x2 *x3)*RD5)*Min_Distance_Label_fila
+    B_wall_fila[:,:,:,0,1]=  ((6 *H2* x1 *x3)*RD5 - (x1* x3)*RD3 - 2 *h *(x1*RD3 - (3 *x1 *x3 *x3)*RD5))*Min_Distance_Label_fila
+    B_wall_fila[:,:,:,2,0]=  (-((6* H2 *x1 *x2)*RD5) - (x1* x2)*RD3 - (6 *h *x1* x2 *x3)*RD5)*Min_Distance_Label_fila
+    B_wall_fila[:,:,:,2,2]=   (-H2 *((6 *e**2)*RD5 - 2*RD3) - e**2*RD3 - RD - (6 *H2 *x2**2)*RD5 - x2**2*RD3 +\
+                   (6 *e**2 *h *x3)*RD5 + 2* h *(x3*RD3 - (3 *x2 *x2 *x3)*RD5))*Min_Distance_Label_fila
+    B_wall_fila[:,:,:,2,1]=((6* H2 *x2 *x3)*RD5 - (x2 *x3)*RD3 - 2 *h *(x2*RD3 - (3 *x3 *x2* x3)*RD5))*Min_Distance_Label_fila
+    B_wall_fila[:,:,:,1,0]=   (-((6 *e**2* h *x1)*RD5) - (6 *H2 *x1 *x3)*RD5 - (x1 *x3)*RD3 + 2 *h *(-(x1*RD3) - (3 *(e**2 *x1 + x1 *x3 *x3))*RD5))*Min_Distance_Label_fila
+    B_wall_fila[:,:,:,1,2]=    (-((6 *e**2* h *x2)*RD5) - (6 *H2 *x2* x3)*RD5 - (x2 *x3)*RD3 + 2 *h *(-(x2*RD3) - (3 *(e**2 *x1 + x3 *x2 *x3))*RD5))*Min_Distance_Label_fila
+    B_wall_fila[:,:,:,1,1]=   (H2 *((6 *e**2)*RD5 - 2*RD3) - e**2*RD3 - RD + (6 *H2 *x3**2)*RD5 - x3**2*RD3 - \
+                   2 *h *(x3*RD3 - (3 *(e**2 *x1 + x3 *x3 *x3))*RD5))*Min_Distance_Label_fila    
+    
+    
+    
+    
+  
+
 
 def M1M2(e):
-    global S_fila_fila        
-    global S_fila_fila_sum
-    global P_fila_fila_sum
+    global S_fila_fila
    
     
+    global B_fila_fila
+
+    
+    
+    global S_fila_fila_sum
+ 
+    
+    global B_fila_fila_sum
+
+    
+    global P_fila_fila_sum
+  
+    
+   
+    
+    
+    
+    global A
 
     global A_fila_fila
 
+    
+    global PA
 
     global PA_fila_fila
 
+   
+    
     
     
     global delta_x_fila_fila
     global delta_y_fila_fila
     global delta_z_fila_fila
+    global delta_z_I_fila_fila
 
-   
+
+    
+ 
    
     global Xf_match_q_fila
     global Yf_match_q_fila    
@@ -171,11 +418,10 @@ def M1M2(e):
     global Xf_all_fila
     global Yf_all_fila    
     global Zf_all_fila 
-    
 
     Fila_point_num=Xf_all_fila.shape[0]
 
-
+    #print(Xf_all_fila.shape,Xf_match_q_fila.shape)
     
     
 
@@ -184,30 +430,75 @@ def M1M2(e):
     delta_z_fila_fila=Zf_all_fila-Zf_match_q_fila    
     delta_y_fila_fila=Yf_all_fila-Yf_match_q_fila
         
+    delta_z_I_fila_fila=Zf_all_fila+Zf_match_q_fila
+    
+#     delta_x_fila_wall=Xf_all_fila-Xf_match_q_wall
+#     delta_y_fila_wall=Yf_all_fila-Yf_match_q_wall    
+#     delta_z_fila_wall=Zf_all_fila-Zf_match_q_wall    
+#     delta_z_I_fila_wall=Zf_all_fila+Zf_match_q_wall
+# 
+#     delta_x_wall_wall=Xf_all_wall-Xf_match_q_wall
+#     delta_y_wall_wall=Yf_all_wall-Yf_match_q_wall    
+#     delta_z_wall_wall=Zf_all_wall-Zf_match_q_wall    
+#     delta_z_I_wall_wall=Zf_all_wall+Zf_match_q_wall
+#     
+#     delta_x_wall_fila=Xf_all_wall-Xf_match_q_fila
+#     delta_y_wall_fila=Yf_all_wall-Yf_match_q_fila    
+#     delta_z_wall_fila=Zf_all_wall-Zf_match_q_fila    
+#     delta_z_I_wall_fila=Zf_all_wall+Zf_match_q_fila    
+    
+    
    
     
     pressurelet_fila_fila(delta_x_fila_fila,delta_y_fila_fila,delta_z_fila_fila,e)    
-    
+#     pressurelet_fila_wall(delta_x_fila_wall,delta_y_fila_wall,delta_z_fila_wall,e)    
 
 
     P_fila_fila_sum=torch.sum(P_fila_fila,dim=2)    
-
+#     P_fila_wall_sum=torch.sum(P_fila_wall,dim=2)    
     
     
     PA_fila_fila[:,0:Fila_point_num]=P_fila_fila_sum[:,:,0]
     PA_fila_fila[:,Fila_point_num:Fila_point_num*2]=P_fila_fila_sum[:,:,1]    
     PA_fila_fila[:,Fila_point_num*2:Fila_point_num*3]=P_fila_fila_sum[:,:,2]     
     
+    
+#     PA_fila_wall[:,0:Wall_point_num]=P_fila_wall_sum[:,:,0]
+#     PA_fila_wall[:,Wall_point_num:Wall_point_num*2]=P_fila_wall_sum[:,:,1]
+#     PA_fila_wall[:,Wall_point_num*2:Wall_point_num*3]=P_fila_wall_sum[:,:,2]
+    
 
-
+#     PA=torch.cat((PA_fila_fila,PA_fila_wall),dim=1) 
+    PA=PA_fila_fila
     stokeslet_fila_fila(delta_x_fila_fila,delta_y_fila_fila,delta_z_fila_fila,e)
-   
+#     stokeslet_fila_wall(delta_x_fila_wall,delta_y_fila_wall,delta_z_fila_wall,e)    
+#     stokeslet_wall_wall(delta_x_wall_wall,delta_y_wall_wall,delta_z_wall_wall,e)
+#     stokeslet_wall_fila(delta_x_wall_fila,delta_y_wall_fila,delta_z_wall_fila,e)    
     
     
     
-
+    blakelet_fila_fila(delta_x_fila_fila,delta_y_fila_fila,delta_z_I_fila_fila,-Zf_match_q_fila,e)
+#     blakelet_fila_wall(delta_x_fila_wall,delta_y_fila_wall,delta_z_I_fila_wall,-Zf_match_q_wall,e)    
+#     blakelet_wall_wall(delta_x_wall_wall,delta_y_wall_wall,delta_z_I_wall_wall,-Zf_match_q_wall,e)
+#     blakelet_wall_fila(delta_x_wall_fila,delta_y_wall_fila,delta_z_I_wall_fila,-Zf_match_q_fila,e)   
+#     print(-Zf_match_q_fila)
     
     S_fila_fila_sum=torch.sum(S_fila_fila,dim=2)
+#     B_fila_fila_sum=torch.sum(B_fila_fila,dim=2)
+#     S_fila_fila_sum+= B_fila_fila_sum
+    
+#     S_fila_wall_sum=torch.sum(S_fila_wall,dim=2)
+#     B_fila_wall_sum=torch.sum(B_fila_wall,dim=2)
+#     S_fila_wall_sum+= B_fila_wall_sum      
+#     
+#     S_wall_wall_sum=torch.sum(S_wall_wall,dim=2)
+#     B_wall_wall_sum=torch.sum(B_wall_wall,dim=2)
+#     S_wall_wall_sum+= B_wall_wall_sum  
+#     
+#     S_wall_fila_sum=torch.sum(S_wall_fila,dim=2)
+#     B_wall_fila_sum=torch.sum(B_wall_fila,dim=2)
+#     S_wall_fila_sum+= B_wall_fila_sum
+    
 
 
     
@@ -222,19 +513,59 @@ def M1M2(e):
     A_fila_fila[Fila_point_num*2:Fila_point_num*3,Fila_point_num*2:Fila_point_num*3]=S_fila_fila_sum[:,:,2,2]
     
     
-
-    PA_mix=torch.zeros((NL,PA_fila_fila.shape[1]),dtype=torch.double)
+#     A_fila_wall[0:Fila_point_num,0:Wall_point_num]=S_fila_wall_sum[:,:,0,0]
+#     A_fila_wall[0:Fila_point_num,Wall_point_num:Wall_point_num*2]=S_fila_wall_sum[:,:,0,1]                    
+#     A_fila_wall[0:Fila_point_num,Wall_point_num*2:Wall_point_num*3]=S_fila_wall_sum[:,:,0,2]    
+#     A_fila_wall[Fila_point_num:Fila_point_num*2,0:Wall_point_num]=S_fila_wall_sum[:,:,1,0]
+#     A_fila_wall[Fila_point_num:Fila_point_num*2,Wall_point_num:Wall_point_num*2]=S_fila_wall_sum[:,:,1,1]                    
+#     A_fila_wall[Fila_point_num:Fila_point_num*2,Wall_point_num*2:Wall_point_num*3]=S_fila_wall_sum[:,:,1,2] 
+#     A_fila_wall[Fila_point_num*2:Fila_point_num*3,0:Wall_point_num]=S_fila_wall_sum[:,:,2,0]
+#     A_fila_wall[Fila_point_num*2:Fila_point_num*3,Wall_point_num:Wall_point_num*2]=S_fila_wall_sum[:,:,2,1]                    
+#     A_fila_wall[Fila_point_num*2:Fila_point_num*3,Wall_point_num*2:Wall_point_num*3]=S_fila_wall_sum[:,:,2,2]    
+#     
+#     
+#     A_wall_wall[0:Wall_point_num,0:Wall_point_num]=S_wall_wall_sum[:,:,0,0]
+#     A_wall_wall[0:Wall_point_num,Wall_point_num:Wall_point_num*2]=S_wall_wall_sum[:,:,0,1]                    
+#     A_wall_wall[0:Wall_point_num,Wall_point_num*2:Wall_point_num*3]=S_wall_wall_sum[:,:,0,2]    
+#     A_wall_wall[Wall_point_num:Wall_point_num*2,0:Wall_point_num]=S_wall_wall_sum[:,:,1,0]
+#     A_wall_wall[Wall_point_num:Wall_point_num*2,Wall_point_num:Wall_point_num*2]=S_wall_wall_sum[:,:,1,1]                    
+#     A_wall_wall[Wall_point_num:Wall_point_num*2,Wall_point_num*2:Wall_point_num*3]=S_wall_wall_sum[:,:,1,2] 
+#     A_wall_wall[Wall_point_num*2:Wall_point_num*3,0:Wall_point_num]=S_wall_wall_sum[:,:,2,0]
+#     A_wall_wall[Wall_point_num*2:Wall_point_num*3,Wall_point_num:Wall_point_num*2]=S_wall_wall_sum[:,:,2,1]                    
+#     A_wall_wall[Wall_point_num*2:Wall_point_num*3,Wall_point_num*2:Wall_point_num*3]=S_wall_wall_sum[:,:,2,2]        
+#     
+#     
+#     A_wall_fila[0:Wall_point_num,0:Fila_point_num]=S_wall_fila_sum[:,:,0,0]
+#     A_wall_fila[0:Wall_point_num,Fila_point_num:Fila_point_num*2]=S_wall_fila_sum[:,:,0,1]                    
+#     A_wall_fila[0:Wall_point_num,Fila_point_num*2:Fila_point_num*3]=S_wall_fila_sum[:,:,0,2]    
+#     A_wall_fila[Wall_point_num:Wall_point_num*2,0:Fila_point_num]=S_wall_fila_sum[:,:,1,0]
+#     A_wall_fila[Wall_point_num:Wall_point_num*2,Fila_point_num:Fila_point_num*2]=S_wall_fila_sum[:,:,1,1]                    
+#     A_wall_fila[Wall_point_num:Wall_point_num*2,Fila_point_num*2:Fila_point_num*3]=S_wall_fila_sum[:,:,1,2] 
+#     A_wall_fila[Wall_point_num*2:Wall_point_num*3,0:Fila_point_num]=S_wall_fila_sum[:,:,2,0]
+#     A_wall_fila[Wall_point_num*2:Wall_point_num*3,Fila_point_num:Fila_point_num*2]=S_wall_fila_sum[:,:,2,1]                    
+#     A_wall_fila[Wall_point_num*2:Wall_point_num*3,Fila_point_num*2:Fila_point_num*3]=S_wall_fila_sum[:,:,2,2]     
+#     
+#     
+#     
+#     A1=torch.cat((A_wall_fila,A_wall_wall),dim=1)
+#     A2=torch.cat((A_fila_fila,A_fila_wall),dim=1)
+#     A=torch.cat((A2,A1),dim=0)
+    A=A_fila_fila
+    PA_mix=torch.zeros((NL,PA.shape[1]),dtype=torch.double)
     for i in range(NL):
         PA_mix[i,:]=PA[int(i/NL*PA.shape[0]),:]/(8*math.pi*mu)
         
-    return A_fila_fila/(8*math.pi*mu),PA_mix
+    #print(A_fila_fila)
+    return A/(8*math.pi*mu),PA_mix
 
 
 
 
 def MatrixQ(L,theta,Qu,Q1,Ql,Q2):
 
-
+    
+#     Q=torch.cat((Qu,-Q2,Ql,Q1),dim=1)    
+#     Q=Q.reshape(2*(N+1),-1)
     Q_up=torch.cat((Qu,-Q2),dim=1)
     Q_down=torch.cat((Ql,Q1),dim=1)
     Q=torch.cat((Q_up,Q_down),dim=0)
@@ -261,7 +592,9 @@ def MatrixQp(L,theta):
 
     
     Q=torch.cat((Qu,Q1,Ql,Q2),dim=1)
-
+#     Q_up=torch.cat((Qu,Q1),dim=1)
+#     Q_down=torch.cat((Ql,Q2),dim=1)
+#     Q=torch.cat((Q_up,Q_down),dim=0)
     Q=Q.reshape(2*(N),-1)
     
     return Q,Qu,Q1,Ql,Q2
@@ -303,7 +636,34 @@ def MatrixB(L,theta,Y):
     B2[-1,1]=0.5
     B2=B2.reshape(1,-1)
     
-
+#     Y1=torch.cat((Y[:-1,:],torch.zeros((2),dtype=torch.double,device=device).reshape(1,-1)),dim=0)
+#     
+#     Y2=torch.cat((torch.zeros((2),dtype=torch.double,device=device).reshape(1,-1),Y[:-1,:]),dim=0)
+# 
+#     
+# #     Y01=torch.repeat(Y[0,:],N+1)
+# #     Y01=Y01.reshape(-1,N+1).T
+#     #print(Y.shape)
+#     Y01=Y[0,:].reshape(1,-1).repeat(N+1,1)
+#     #Y02=Y01.detach()    
+#     Y01[-1,0]=0
+#     Y01[-1,1]=0
+# # torch.repeat(Y[:,0],N+1) XX.reshape(-1,N+1)
+# 
+# #     Y02=torch.repeat(Y[0,:],N+1)
+# #     Y02=Y02.reshape(-1,N+1).T
+#     Y02=Y[0,:].reshape(1,-1).repeat(N+1,1)
+#     Y02[0,0]=0
+#     Y02[0,1]=0
+    #np.savetxt('Y02.out', Y02.numpy(), delimiter=',')
+#     t=torch.cat((torch.cos(theta[2:]).reshape(-1,1),torch.sin(theta[2:]).reshape(-1,1)),dim=1)
+#      
+#     t1= torch.cat((t,torch.zeros((2),dtype=torch.double,device=device).reshape(1,-1)),dim=0)
+#    
+#     t2= torch.cat((torch.zeros((2),dtype=torch.double,device=device).reshape(1,-1),t),dim=0)
+#     B3=0.5*L*(Y1-Y01)+(L**2)/6.0*t1+0.5*L*(Y2-Y02)+(L**2)/3.0*t2
+#     #np.savetxt('B3.out', B3.numpy(), delimiter=',')  
+#     B3=torch.cat((-B3[:,1].reshape(-1,1),B3[:,0].reshape(-1,1)),dim=1)
     
     B3=torch.cat((-(Y[:,1]-Y[0,1]).view(1,-1),(Y[:,0]-Y[0,0]).view(1,-1)),dim=1)
     #B3=B3.reshape(2,-1).T
@@ -381,7 +741,7 @@ def MatrixD_position(beta_ini,Xini,Yini,L):
             D1x[i,:]=0
         else:
             D1[i,:i]=torch.sin(beta_ini[:i])/NL
-            D1x[i,:i]=torch.cos(beta_ini[:i])/NL
+            D1x[i,:i]=torch.cos(beta_ini[:i])/NL 
     return D1, D2,D1x,D2x
 
 
@@ -409,7 +769,7 @@ def Calculate_velocity(x,w,x_first):
 #     Zf_q_fila=torch.zeros_like(Xf_match_q_fila)    
     
     
-
+    #print(Min_Distance_Label_fila.shape,Y_dense.shape)
     for m in range(Xf_match_q_fila.shape[1]):
         
         selected_x=Label_Matrix_fila[:,m]*Y_dense[:,0]
@@ -422,7 +782,10 @@ def Calculate_velocity(x,w,x_first):
     
     B=MatrixB(L,theta,Y)
     
-
+#     print(B)
+#     
+    
+    
     
     A,Ap_mix=M1M2(e)
     
@@ -459,14 +822,17 @@ def Calculate_velocity(x,w,x_first):
     veloall=torch.matmul(D1,velo)+D2    
     velo=velo.numpy()
     velo=np.squeeze(velo)
+    
     omega=velo[2]    
 
 
 #     print(C1.shape,C2.shape)
     velo_points_all=torch.matmul(Q,velo_points)
     velo_points_fila=torch.zeros(((Fila_point_num)*3,1),dtype=torch.double,device=device)
-    velo_points_fila[:Fila_point_num*2,:]=velo_points_all    
-
+    velo_points_fila[:Fila_point_num*2,:]=velo_points_all -  bg_flow_U.view(-1,1) 
+#    veloall=torch.matmul(D1,velo)+D2
+#     velo_points_filawall=torch.zeros(((Wall_point_num+Fila_point_num)*3,1),dtype=torch.double,device=device)   
+#     velo_points_filawall[:Fila_point_num*2,:]=velo_points_all
     force_points_filawall= torch.linalg.solve(A, velo_points_fila)
     
     pressure_all=torch.matmul(Ap_mix,force_points_filawall.reshape(-1,1))    
@@ -474,7 +840,9 @@ def Calculate_velocity(x,w,x_first):
     
     
     
-
+#     veloall[0]=0.5*(veloall[0]+veloall[-2])
+#     veloall[1]=0.5*(veloall[1]+veloall[-1])
+#     veloall=veloall[:-2]
     velon=velo.copy()
     
     velon[0]=torch.mean(veloall[::2])
@@ -483,25 +851,66 @@ def Calculate_velocity(x,w,x_first):
     output=np.concatenate((velon,action))
     
     
-    D1y,D2y,D1x,D2x=MatrixD_position(beta_ini,Xini,Yini,1.0/NL)
-   
-    Yp=torch.matmul(D1y,torch.ones((NL,1),dtype=torch.double,device=device))+D2y
-    Xp=torch.matmul(D1x,torch.ones((NL,1),dtype=torch.double,device=device))+D2x   
+ 
     
-    return output,velo,np.squeeze(Xp.numpy()),np.squeeze(Yp.numpy()),pressure_all
+    return output,velo,pressure_all
 
 
+
+def Calculate_position(x,x_first):
+    Xini=x_first[0]
+    Yini=x_first[1]
+    beta_ini=torch.tensor(x[2:].copy(),dtype=torch.double,device=device)
+    NI=np.zeros(NL,dtype=np.double)
+    for i in range(NL):
+        NI[i]=int(int(N/NL)*(i+1)-1)
+        if i>0:
+            beta_ini[i]+=beta_ini[i-1]
+#     x=Xini
+#     y=Yini
+#     print(y)
+#     for i in range(NL-1):
+#         x=x+math.cos(beta_ini[i])
+#         y=y+math.sin(beta_ini[i])
+#         print(y)
+    D1y,D2y,D1x,D2x=MatrixD_position(beta_ini,Xini,Yini,1.0/NL)
+    Yp=torch.matmul(D1y,torch.ones((NL,1),dtype=torch.double,device=device))+D2y
+    Xp=torch.matmul(D1x,torch.ones((NL,1),dtype=torch.double,device=device))+D2x
+#     print(Yp)
+    return np.squeeze(Xp.numpy()),np.squeeze(Yp.numpy())
+    
+    
+    
+    
 
 
 def initial(x,w,x_first):
 
 
+
+
+
+# 
+#     #L=2.0/N
+#     L=4.0/N
     L=1.0/N   
     e=L*0.1
     
     Xini=x_first[0]
     Yini=x_first[1]
+    #Yini=9*10000
+    #print(Xini**2+Yini**2)
+    # beta1_ini=math.pi*0.0
+    # beta2_ini=math.pi/2
+    # beta3_ini=math.pi
+    # beta4_ini=math.pi*1.5
 
+
+     
+#     beta_ini=torch.tensor(x[1:].copy(),dtype=torch.double,device=device)
+#     beta_ini[1]+=beta_ini[0]
+#     beta_ini[2]+=beta_ini[1]
+#     beta_ini[3]+=beta_ini[2]   
     beta_ini=torch.tensor(x[2:].copy(),dtype=torch.double,device=device)
     NI=np.zeros(NL,dtype=np.double)
     for i in range(NL):
@@ -509,7 +918,10 @@ def initial(x,w,x_first):
         if i>0:
             beta_ini[i]+=beta_ini[i-1]    
    
-
+    # beta1_ini=0
+    # beta2_ini=0
+    # beta3_ini=0
+    # beta4_ini=0
     theta=torch.zeros((N+1),dtype=torch.double,device=device)
     forQp=torch.ones((N+1),dtype=torch.double,device=device)
     forQp[0]=Xini
@@ -531,17 +943,20 @@ def initial(x,w,x_first):
     Yposition=Yposition.reshape(-1,2)
 
     bg_flow_U=Yposition.clone()
-
+#     bg_flow_r=torch.norm(bg_flow_U, dim=1)
 
     bg_flow_U=Ut*torch.cat(((torch.cos(math.pi*Yposition[:,0])*torch.sin(math.pi*Yposition[:,1])).reshape(-1,1)\
-                         ,-(torch.cos(math.pi*Yposition[:,1])*torch.sin(math.pi*Yposition[:,0])).reshape(-1,1)),dim=0)
+                         ,-(torch.cos(math.pi*Yposition[:,1])*torch.sin(math.pi*Yposition[:,0])).reshape(-1,1)),dim=1)
     bg_flow_U=bg_flow_U.reshape(1,-1)    
 
 
+    #print(Yposition,theta)
     absU=cal_remaining_w(x.copy(),w)
     
     action=absU.copy() 
-  
+#     absU[1]=absU[1]+absU[0]
+#     absU[2]=absU[2]+absU[1]
+    #absU[8]=absU[8]+absU[7]    
     
     for i in range(NL):
      
@@ -552,6 +967,10 @@ def initial(x,w,x_first):
 
     
     action_absolute=torch.zeros((N-2),dtype=torch.double,device=device)
+#     action_absolute[N1:N2]=absU[0]
+#     action_absolute[N2:N3]=absU[1]
+#     action_absolute[N3:]=absU[2]
+#    
 
 
     for i in range(NL-2):
@@ -606,36 +1025,37 @@ def initial_dense(x,w,x_first):
     
     Yposition=Yposition.reshape(-1,2)
     
-
+    #print(Yposition)
   
     return Yposition
 
 
-#solve the dynamics 
+
+
 
 def RK(x,w,x_first):
     Xn=0.0
     Yn=0.0
     r=0.0
-    xc=x+1.0
-    xc=xc-1.0
+    xc=x.copy()
+    #print(x)
     x_first_delta=np.zeros((2))
     x_fc=x_first.copy()
     Ypositions=np.zeros((NL+1))
     Ntime=20
     whole_time=0.2
     part_time=whole_time/Ntime
-
+#     print(x)
     for i in range(Ntime):
-
-        V,Vo,Xp,Yp,pressure_all=Calculate_velocity(xc, w,x_fc)
+        #print(xc.shape,w.shape)
+        V,Vo,pressure_all=Calculate_velocity(xc, w,x_fc)
         k1=part_time*V
-        V,Vo,Xp,Yp,pressure_all=Calculate_velocity(xc+0.5*k1, w,x_fc+0.5*part_time*Vo[:2])        
+        V,Vo,pressure_all=Calculate_velocity(xc+0.5*k1, w,x_fc+0.5*part_time*Vo[:2])        
         
-
+        #print(x_fc[0]**2+x_fc[1]**2)
         k2=part_time*V
         
-
+        #k2=0.01*Calculate_velocity(xc+0.5*k1[2:], w)
         xc+=k2
         xc[2]=(xc[2]+math.pi)%(2*math.pi)-math.pi
           
@@ -646,7 +1066,15 @@ def RK(x,w,x_first):
 
         r+=(k2[0])/(whole_time)
           
-    
+#     Ypositions[0]=xc[0]-sin(xc[1])-sin(xc[1]+xc[2])
+#     Ypositions[1]=Ypositions[0]+sin(xc[1])
+#     Ypositions[2]= Ypositions[1] + sin(xc[1]+xc[2]) 
+#     Ypositions[3]= Ypositions[2] + sin(xc[1]+xc[2]+xc[3])
+#     Ypositions[4]= Ypositions[3] + sin(xc[1]+xc[2]+xc[3]+xc[4])
+    #print(Yp.shape)
+    #print(xc[0],xc[1])
+    #print(pressure_diff)
+    Xp,Yp=Calculate_position(xc,x_fc)
     return xc , Xn ,r  ,x_first_delta,Xp,Yp,pressure_all
     
     
@@ -660,3 +1088,4 @@ def RK(x,w,x_first):
     
     
     
+
