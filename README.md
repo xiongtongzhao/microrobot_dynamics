@@ -1,6 +1,7 @@
 ## Numerical solver for "Chemotactic navigation in robotic swimmers via reset-free hierarchical reinforcement learning"
 [![arXiv](https://img.shields.io/badge/arXiv-2408.07346-df2a2a.svg)](https://arxiv.org/pdf/2408.07346)
 [![Python](https://img.shields.io/badge/python-3.7.17-blue)](https://www.python.org)
+[![DOI](https://zenodo.org/badge/856809324.svg)](https://doi.org/10.5281/zenodo.15490905)
 
 
 Tongzhao Xiong, Zhaorong Liu, Yufei Wang, Chong Jin Ong, Lailai Zhu 
